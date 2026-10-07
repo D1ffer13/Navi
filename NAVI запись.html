@@ -1,0 +1,566 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>NAVI запись</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700&family=Onest:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: one narrow column, wordmark on top, day strip, then a grid of hourly slots.
+   Palette: navy ink on cool paper, barber-pole red used only as a small signal. */
+:root {
+  --bg: #EDEFF2;
+  --surface: #FFFFFF;
+  --ink: #0E1A2B;
+  --muted: #566478;
+  --line: #C9D1DC;
+  --brand: #14305C;
+  --brand-ink: #FFFFFF;
+  --pole-red: #C73A2E;
+  --pole-white: #FFFFFF;
+  --pole-blue: #14305C;
+  --hatch: #D7DCE4;
+  --ok: #1E7D4F;
+  --danger: #B3261E;
+  --scrim: rgba(14, 26, 43, 0.55);
+  --font-display: "Unbounded", "Montserrat", "Arial Black", system-ui, sans-serif;
+  --font-body: "Onest", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0B1320;
+    --surface: #131F33;
+    --ink: #E7ECF4;
+    --muted: #97A5BA;
+    --line: #28384F;
+    --brand: #8DB0F5;
+    --brand-ink: #0B1320;
+    --pole-red: #E2584B;
+    --pole-white: #E7ECF4;
+    --pole-blue: #8DB0F5;
+    --hatch: #1D2B43;
+    --ok: #5CC28E;
+    --danger: #FF8A80;
+    --scrim: rgba(3, 7, 14, 0.7);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0B1320;
+  --surface: #131F33;
+  --ink: #E7ECF4;
+  --muted: #97A5BA;
+  --line: #28384F;
+  --brand: #8DB0F5;
+  --brand-ink: #0B1320;
+  --pole-red: #E2584B;
+  --pole-white: #E7ECF4;
+  --pole-blue: #8DB0F5;
+  --hatch: #1D2B43;
+  --ok: #5CC28E;
+  --danger: #FF8A80;
+  --scrim: rgba(3, 7, 14, 0.7);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.45;
+  padding-inline: 16px;
+  padding-block: 0 48px;
+  -webkit-text-size-adjust: 100%;
+}
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+
+.wrap { max-width: 680px; margin-inline: auto; display: flex; flex-direction: column; gap: 28px; }
+
+.pole {
+  height: 8px;
+  margin-inline: -16px;
+  background: repeating-linear-gradient(-45deg, var(--pole-red) 0 14px, var(--pole-white) 14px 28px, var(--pole-blue) 28px 42px, var(--pole-white) 42px 56px);
+}
+
+header { display: flex; flex-direction: column; gap: 14px; padding-top: 28px; }
+.kicker { font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(56px, 20vw, 112px);
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  color: var(--brand);
+}
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px 20px; margin: 6px 0 0; padding: 14px 0 0; border-top: 1px solid var(--line); }
+.facts div { min-width: 0; }
+.facts dt { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.facts dd { margin: 2px 0 0; font-size: 18px; font-weight: 600; }
+.facts dd .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+.status { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); flex: none; }
+.status[data-state="live"] .dot { background: var(--ok); animation: pulse 2.4s ease-out infinite; }
+.status[data-state="error"] .dot { background: var(--danger); }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ok) 55%, transparent); } 70%, 100% { box-shadow: 0 0 0 9px transparent; } }
+.master-tag { margin-left: auto; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand-ink); background: var(--brand); padding: 3px 8px; border-radius: 4px; }
+
+h2 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 18px; letter-spacing: -0.01em; }
+.sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; }
+.hint { font-size: 13px; color: var(--muted); }
+
+section { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+.days {
+  display: flex; gap: 8px; overflow-x: auto; padding: 2px 16px 10px; margin-inline: -16px;
+  scroll-snap-type: x proximity; scroll-padding-inline: 16px; scrollbar-width: thin;
+}
+.day {
+  flex: none; width: 66px; padding: 10px 0 8px; border: 1.5px solid var(--line); border-radius: 10px;
+  background: var(--surface); display: flex; flex-direction: column; align-items: center; gap: 2px; scroll-snap-align: start;
+}
+.day .wd { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.day .dn { font-family: var(--font-mono); font-weight: 600; font-size: 24px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.day .fc { margin-top: 4px; min-width: 28px; padding: 1px 6px; border-radius: 999px; font-family: var(--font-mono); font-size: 12px; font-weight: 600; background: var(--bg); color: var(--ink); text-align: center; font-variant-numeric: tabular-nums; }
+.day[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+.day[aria-pressed="true"] .wd { color: var(--brand-ink); opacity: 0.8; }
+.day[aria-pressed="true"] .fc { background: var(--brand-ink); color: var(--brand); }
+.day[data-today="true"]:not([aria-pressed="true"]) { border-color: var(--pole-red); }
+.day[data-n="0"]:not([aria-pressed="true"]) { opacity: 0.6; }
+
+.slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.slot {
+  min-height: 78px; padding: 12px 14px; text-align: left; border-radius: 10px; border: 1.5px solid var(--ink);
+  background: var(--surface); display: flex; flex-direction: column; justify-content: center; gap: 2px; min-width: 0;
+  transition: background-color 0.15s, color 0.15s, transform 0.1s;
+}
+.slot .t { font-family: var(--font-mono); font-weight: 600; font-size: 20px; font-variant-numeric: tabular-nums; }
+.slot .l { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.slot[data-kind="free"] .l { color: var(--ok); font-weight: 600; }
+.slot[data-kind="free"]:hover { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
+.slot[data-kind="free"]:hover .l { color: var(--brand-ink); }
+.slot[data-kind="free"]:active { transform: scale(0.98); }
+.slot[data-kind="busy"] { border-color: var(--line); background: repeating-linear-gradient(135deg, var(--hatch) 0 6px, transparent 6px 12px), var(--surface); color: var(--muted); }
+.slot[data-kind="busy"] .t { text-decoration: line-through; text-decoration-thickness: 1.5px; }
+.slot[data-kind="mine"] { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+.slot[data-kind="mine"] .l { color: var(--brand-ink); font-weight: 600; }
+.slot[data-kind="closed"] { border-style: dashed; border-color: var(--muted); background: transparent; color: var(--muted); }
+.slot[data-kind="past"], .slot[data-kind="loading"] { border-color: var(--line); background: transparent; color: var(--muted); opacity: 0.55; }
+.slot[disabled] { cursor: default; }
+.slot[data-admin="true"][data-kind="busy"], .slot[data-admin="true"][data-kind="closed"] { cursor: pointer; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid var(--ink); display: inline-block; background: var(--surface); }
+.legend i.b { border-color: var(--line); background: repeating-linear-gradient(135deg, var(--hatch) 0 3px, transparent 3px 6px); }
+.legend i.m { background: var(--brand); border-color: var(--brand); }
+
+.notice { padding: 12px 14px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--surface); font-size: 14px; }
+.notice.warn { border-color: var(--danger); }
+
+.mine-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.mine-list li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); }
+.mine-list .when { font-weight: 600; min-width: 0; }
+.mine-list .when span { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+footer { font-size: 13px; color: var(--muted); display: flex; flex-direction: column; gap: 4px; padding-top: 14px; border-top: 1px solid var(--line); }
+footer .sel { user-select: all; }
+
+.btn { min-height: 48px; padding: 0 20px; border-radius: 10px; border: 1.5px solid var(--ink); background: transparent; font-weight: 600; }
+.btn.primary { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+.btn.danger { border-color: var(--danger); color: var(--danger); }
+.btn.small { min-height: 40px; padding: 0 14px; font-size: 14px; }
+.btn[disabled] { opacity: 0.55; cursor: default; }
+
+.overlay { position: fixed; inset: 0; z-index: 10; display: flex; align-items: flex-end; justify-content: center; }
+.scrim { position: absolute; inset: 0; background: var(--scrim); }
+.sheet {
+  position: relative; width: 100%; max-width: 480px; max-height: 92%; overflow-y: auto; background: var(--surface); color: var(--ink);
+  border-radius: 18px 18px 0 0; padding: 22px 20px calc(22px + env(safe-area-inset-bottom, 0px));
+  display: flex; flex-direction: column; gap: 12px; animation: rise 0.22s ease-out;
+}
+@keyframes rise { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.sheet h3 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 20px; letter-spacing: -0.01em; }
+.sheet .when { font-family: var(--font-mono); font-weight: 600; font-size: 17px; font-variant-numeric: tabular-nums; }
+.sheet .sub { margin: 0; color: var(--muted); font-size: 14px; }
+.sheet form { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.sheet label { font-size: 13px; font-weight: 600; letter-spacing: 0.04em; margin-top: 6px; }
+.sheet input { min-height: 50px; padding: 0 14px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--bg); font-size: 16px; width: 100%; }
+.sheet input:focus-visible { border-color: var(--brand); outline-offset: 0; }
+.err { margin: 4px 0 0; color: var(--danger); font-size: 14px; }
+.actions { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.client { padding: 12px 14px; border-radius: 10px; background: var(--bg); display: flex; flex-direction: column; gap: 2px; }
+.client b { font-size: 18px; }
+.client .mono { font-family: var(--font-mono); font-size: 16px; user-select: all; }
+.check { width: 44px; height: 44px; border-radius: 50%; background: var(--ok); color: var(--bg); display: grid; place-items: center; font-weight: 700; font-size: 24px; }
+
+@media (min-width: 600px) {
+  .overlay { align-items: center; padding: 16px; }
+  .sheet { border-radius: 18px; }
+  .slots { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet, .status[data-state="live"] .dot { animation: none; }
+  .slot { transition: none; }
+}
+</style>
+
+<div class="pole" aria-hidden="true"></div>
+<main class="wrap">
+  <header>
+    <span class="kicker">Барбершоп</span>
+    <h1>NAVI</h1>
+    <dl class="facts">
+      <div><dt>Мастер</dt><dd>Виктория</dd></div>
+      <div><dt>Работаем</dt><dd><span class="mono">10:00–20:00</span></dd></div>
+      <div><dt>Стрижка</dt><dd>1 час</dd></div>
+    </dl>
+    <div class="status" id="status" data-state="loading"><span class="dot" aria-hidden="true"></span><span id="statusText">Загружаем расписание…</span><span class="master-tag" id="masterTag" hidden>Мастер</span></div>
+  </header>
+
+  <section aria-labelledby="dayTitle">
+    <div class="sec-head"><h2 id="dayTitle">Выберите день</h2><span class="hint">Число под датой: свободные окна</span></div>
+    <div class="days" id="days" role="group" aria-label="Дни"></div>
+  </section>
+
+  <section aria-labelledby="slotTitle">
+    <div class="sec-head"><h2 id="slotTitle">День</h2><span class="hint" id="slotSummary"></span></div>
+    <div class="notice warn" id="banner" hidden></div>
+    <div class="slots" id="slots"></div>
+    <div class="legend" aria-hidden="true">
+      <span><i></i>Свободно</span><span><i class="b"></i>Занято</span><span><i class="m"></i>Ваша запись</span>
+    </div>
+  </section>
+
+  <section aria-labelledby="mineTitle" id="mineSec" hidden>
+    <h2 id="mineTitle">Ваши записи</h2>
+    <ul class="mine-list" id="mineList"></ul>
+  </section>
+
+  <footer id="foot">
+    <span>Одна запись — один час. Время по Алматы.</span>
+  </footer>
+</main>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="scrim" data-close="1"></div>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><div id="sheetBody"></div></div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var CFG = { open: 10, close: 20, daysAhead: 14, tz: 'Asia/Almaty', phone: '', address: '' };
+  var WD_FULL = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+  var WD_SHORT = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+  var MON = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+  var HOLDER = 'v' + Math.random().toString(36).slice(2, 10);
+
+  var $ = function (id) { return document.getElementById(id); };
+  var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function plural(n, f) { var a = Math.abs(n) % 100, b = a % 10; if (a > 10 && a < 20) return f[2]; if (b > 1 && b < 5) return f[1]; if (b === 1) return f[0]; return f[2]; }
+
+  function salonNow() {
+    try {
+      var parts = new Intl.DateTimeFormat('en-CA', { timeZone: CFG.tz, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date());
+      var g = function (t) { for (var i = 0; i < parts.length; i++) if (parts[i].type === t) return parts[i].value; return '0'; };
+      return { key: g('year') + '-' + g('month') + '-' + g('day'), min: (+g('hour') % 24) * 60 + (+g('minute')) };
+    } catch (e) {
+      var d = new Date();
+      return { key: d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()), min: d.getHours() * 60 + d.getMinutes() };
+    }
+  }
+  function addDays(key, n) {
+    var p = key.split('-').map(Number);
+    var dt = new Date(Date.UTC(p[0], p[1] - 1, p[2] + n));
+    return { key: dt.getUTCFullYear() + '-' + pad(dt.getUTCMonth() + 1) + '-' + pad(dt.getUTCDate()), wd: dt.getUTCDay(), day: dt.getUTCDate(), mon: dt.getUTCMonth() };
+  }
+  function longDate(key) { var d = addDays(key, 0); return WD_FULL[d.wd] + ', ' + d.day + ' ' + MON[d.mon]; }
+  function shortDate(key) { var d = addDays(key, 0); return WD_SHORT[d.wd] + ', ' + d.day + ' ' + MON[d.mon]; }
+  function range(h) { return pad(h) + ':00–' + pad(h + 1) + ':00'; }
+  function fmtPhone(raw) {
+    var d = String(raw || '').replace(/\D/g, '');
+    if (d.length === 11 && (d[0] === '7' || d[0] === '8')) d = d.slice(1);
+    if (d.length !== 10) return null;
+    return '+7 ' + d.slice(0, 3) + ' ' + d.slice(3, 6) + ' ' + d.slice(6, 8) + ' ' + d.slice(8);
+  }
+
+  function lsGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+  var db = null, user = null, isAdmin = false, canWrite = true;
+  var ready = false, failed = false, unavailable = false;
+  var bookings = {};
+  var today = salonNow().key, sel = today, firstPick = true;
+  var days = [];
+  var lastFocus = null;
+
+  var hours = []; for (var h = CFG.open; h < CFG.close; h++) hours.push(h);
+
+  function myTokens() { var l = lsGet('navi-mine'); return Array.isArray(l) ? l : []; }
+  function rememberMine(id, token) { var l = myTokens().filter(function (x) { return x.id !== id; }); l.push({ id: id, token: token }); lsSet('navi-mine', l.slice(-30)); }
+  function isMine(id, rec) { return !!rec && myTokens().some(function (x) { return x.id === id && x.token === rec.token; }); }
+
+  function slotState(key, hr) {
+    var now = salonNow();
+    var id = key + '_' + pad(hr);
+    if (key < now.key || (key === now.key && hr * 60 <= now.min)) return { kind: 'past', id: id };
+    if (!ready) return { kind: 'loading', id: id };
+    var rec = bookings[id];
+    if (!rec) return { kind: 'free', id: id };
+    if (rec.blocked) return { kind: 'closed', id: id, rec: rec };
+    if (isMine(id, rec)) return { kind: 'mine', id: id, rec: rec };
+    return { kind: 'busy', id: id, rec: rec };
+  }
+  function freeCount(key) { var n = 0; hours.forEach(function (hr) { if (slotState(key, hr).kind === 'free') n++; }); return n; }
+
+  /* ---------- day strip ---------- */
+  function buildDays() {
+    days = [];
+    for (var i = 0; i < CFG.daysAhead; i++) days.push(addDays(today, i));
+    if (sel < today) sel = today;
+    $('days').innerHTML = days.map(function (d) {
+      return '<button type="button" class="day" data-key="' + d.key + '" data-today="' + (d.key === today) + '" aria-pressed="false">' +
+        '<span class="wd">' + WD_SHORT[d.wd] + '</span><span class="dn">' + d.day + '</span><span class="fc">·</span></button>';
+    }).join('');
+  }
+  function updateDays() {
+    var chips = $('days').children;
+    for (var i = 0; i < chips.length; i++) {
+      var c = chips[i], key = c.getAttribute('data-key');
+      var n = freeCount(key);
+      c.setAttribute('aria-pressed', key === sel ? 'true' : 'false');
+      c.setAttribute('data-n', ready ? n : '');
+      c.querySelector('.fc').textContent = ready ? (n || '—') : '·';
+      c.setAttribute('aria-label', shortDate(key) + (ready ? ': ' + n + ' ' + plural(n, ['свободное окно', 'свободных окна', 'свободных окон']) : ''));
+    }
+  }
+
+  /* ---------- slots ---------- */
+  var LABEL = { free: 'Свободно', busy: 'Занято', mine: 'Ваша запись', closed: 'Закрыто', past: 'Прошло', loading: '…' };
+  function renderSlots() {
+    var freeN = 0;
+    var html = hours.map(function (hr) {
+      var st = slotState(sel, hr);
+      if (st.kind === 'free') freeN++;
+      var label = LABEL[st.kind];
+      if (isAdmin && st.kind === 'busy' && st.rec && st.rec.name) label = st.rec.name;
+      var enabled = st.kind === 'free' || st.kind === 'mine' || (isAdmin && (st.kind === 'busy' || st.kind === 'closed'));
+      return '<button type="button" class="slot" data-h="' + hr + '" data-kind="' + st.kind + '" data-admin="' + isAdmin + '"' + (enabled ? '' : ' disabled') +
+        ' aria-label="' + esc(range(hr) + ', ' + label) + '"><span class="t">' + pad(hr) + ':00</span><span class="l">' + esc(label) + '</span></button>';
+    }).join('');
+    $('slots').innerHTML = html;
+    $('slotTitle').textContent = (sel === today ? 'Сегодня, ' : '') + longDate(sel);
+    $('slotSummary').textContent = ready ? (freeN ? 'Свободно ' + freeN + ' из ' + hours.length : 'Все окна заняты') : '';
+  }
+
+  function renderStatus() {
+    var el = $('status'), t = $('statusText');
+    var state = unavailable || failed ? 'error' : (ready ? 'live' : 'loading');
+    el.setAttribute('data-state', state);
+    t.textContent = unavailable ? 'Онлайн-запись сейчас недоступна' : failed ? 'Нет связи с расписанием. Обновите страницу.' : ready ? 'Расписание обновляется в реальном времени' : 'Загружаем расписание…';
+    $('masterTag').hidden = !isAdmin;
+    var b = $('banner');
+    if (unavailable) { b.hidden = false; b.textContent = 'Не удалось подключиться к расписанию. Попробуйте обновить страницу или войти в аккаунт.'; }
+    else if (!canWrite) { b.hidden = false; b.textContent = 'Расписание доступно для просмотра. Чтобы записаться, войдите в аккаунт или свяжитесь с мастером.'; }
+    else b.hidden = true;
+  }
+
+  function renderMine() {
+    var items = [];
+    Object.keys(bookings).forEach(function (id) { var r = bookings[id]; if (r && !r.blocked && isMine(id, r) && r.date >= today) items.push({ id: id, rec: r }); });
+    items.sort(function (a, b) { return a.id < b.id ? -1 : 1; });
+    $('mineSec').hidden = !items.length;
+    $('mineList').innerHTML = items.map(function (it) {
+      return '<li><div class="when">' + esc(shortDate(it.rec.date)) + ' · <span>' + range(it.rec.hour) + '</span></div>' +
+        '<button type="button" class="btn small danger" data-cancel="' + it.id + '">Отменить</button></li>';
+    }).join('');
+  }
+
+  function render() { updateDays(); renderSlots(); renderStatus(); renderMine(); }
+
+  function renderFooter() {
+    var f = $('foot');
+    if (CFG.address) f.insertAdjacentHTML('beforeend', '<span>' + esc(CFG.address) + '</span>');
+    if (CFG.phone) f.insertAdjacentHTML('beforeend', '<span>Телефон: <span class="sel">' + esc(CFG.phone) + '</span></span>');
+  }
+
+  /* ---------- sheet ---------- */
+  function openSheet(html) {
+    lastFocus = document.activeElement;
+    $('sheetBody').innerHTML = html;
+    $('overlay').hidden = false;
+    var f = $('sheetBody').querySelector('input, button.primary, button');
+    if (f) setTimeout(function () { try { f.focus(); } catch (e) {} }, 30);
+  }
+  function closeSheet() {
+    $('overlay').hidden = true; $('sheetBody').innerHTML = '';
+    if (lastFocus && lastFocus.focus) { try { lastFocus.focus(); } catch (e) {} }
+  }
+  function head(title, key, hr) {
+    return '<h3 id="sheetTitle">' + esc(title) + '</h3><div class="when">' + esc(shortDate(key)) + ' · ' + range(hr) + '</div><p class="sub">Мастер Виктория · 1 час</p>';
+  }
+
+  function bookSheet(key, hr) {
+    var me = lsGet('navi-me') || {};
+    openSheet(head('Запись на стрижку', key, hr) +
+      '<form id="bookForm" novalidate data-key="' + key + '" data-h="' + hr + '">' +
+      '<label for="fName">Имя</label><input id="fName" name="name" autocomplete="given-name" maxlength="40" required value="' + esc(me.name || '') + '">' +
+      '<label for="fPhone">Телефон</label><input id="fPhone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 700 000 00 00" required value="' + esc(me.phone || '') + '">' +
+      '<p class="err" id="fErr" role="alert" hidden></p>' +
+      '<div class="actions"><button type="submit" class="btn primary" id="fSubmit">Записаться</button>' +
+      (isAdmin ? '<button type="button" class="btn" data-block="1">Закрыть это окно</button>' : '') +
+      '<button type="button" class="btn" data-close="1">Отмена</button></div></form>');
+  }
+  function detailSheet(key, hr, rec, id) {
+    openSheet(head('Занято', key, hr) +
+      '<div class="client"><b>' + esc(rec.name || 'Клиент') + '</b><span class="mono">' + esc(rec.phone || '') + '</span></div>' +
+      '<div class="actions"><button type="button" class="btn danger" data-cancel="' + id + '" data-arm="1">Отменить запись</button><button type="button" class="btn" data-close="1">Закрыть</button></div>');
+  }
+  function closedSheet(key, hr, id) {
+    openSheet(head('Окно закрыто', key, hr) +
+      '<p class="sub">Клиенты не видят это время как свободное.</p>' +
+      '<div class="actions"><button type="button" class="btn primary" data-cancel="' + id + '">Открыть окно</button><button type="button" class="btn" data-close="1">Закрыть</button></div>');
+  }
+  function mineSheet(key, hr, id) {
+    openSheet(head('Ваша запись', key, hr) +
+      '<p class="sub">Если планы изменились, отмените запись, чтобы окно освободилось.</p>' +
+      '<div class="actions"><button type="button" class="btn danger" data-cancel="' + id + '" data-arm="1">Отменить запись</button><button type="button" class="btn" data-close="1">Закрыть</button></div>');
+  }
+  function doneSheet(key, hr) {
+    openSheet('<div class="check" aria-hidden="true">✓</div><h3 id="sheetTitle">Вы записаны</h3><div class="when">' + esc(shortDate(key)) + ' · ' + range(hr) + '</div>' +
+      '<p class="sub">Мастер Виктория ждёт вас в NAVI. Если не получится прийти, отмените запись на этой странице.</p>' +
+      '<div class="actions"><button type="button" class="btn primary" data-close="1">Готово</button></div>');
+  }
+
+  function showErr(msg) { var e = $('fErr'); if (!e) return; e.textContent = msg; e.hidden = !msg; }
+
+  async function book(key, hr, name, phone) {
+    var st = slotState(key, hr);
+    if (st.kind === 'past') return 'Это время уже прошло. Выберите другое.';
+    if (st.kind !== 'free') return 'Это окно только что заняли. Выберите другое время.';
+    var ref = db.collection('bookings').doc(st.id);
+    try {
+      var lease = await ref.acquire({ holder: HOLDER, ttlMs: 5000 });
+      if (!lease.acquired) return 'Это окно только что выбрал другой клиент. Выберите другое время.';
+      var snap = await ref.get();
+      var cur = snap.exists ? snap.data() : null;
+      if (cur && (cur.token || cur.blocked)) return 'Это окно только что заняли. Выберите другое время.';
+      var token = (isAdmin ? 'admin-' : 'c-') + Math.random().toString(36).slice(2) + Date.now().toString(36);
+      await ref.set({ date: key, hour: hr, name: name, phone: phone, token: token, createdAt: Date.now() });
+      if (!isAdmin) rememberMine(st.id, token);
+      return null;
+    } catch (e) {
+      return 'Не получилось записать. Проверьте связь и попробуйте ещё раз.';
+    }
+  }
+
+  async function removeDoc(id) {
+    try { await db.collection('bookings').doc(id).delete(); return true; } catch (e) { return false; }
+  }
+
+  /* ---------- events ---------- */
+  $('days').addEventListener('click', function (ev) {
+    var b = ev.target.closest('.day'); if (!b) return;
+    sel = b.getAttribute('data-key'); render();
+  });
+
+  $('slots').addEventListener('click', function (ev) {
+    var b = ev.target.closest('.slot'); if (!b || b.disabled) return;
+    var hr = +b.getAttribute('data-h');
+    var st = slotState(sel, hr);
+    if (st.kind === 'free') {
+      if (!db || !canWrite) { showBanner('Онлайн-запись для вас сейчас недоступна.'); return; }
+      bookSheet(sel, hr);
+    } else if (st.kind === 'mine') mineSheet(sel, hr, st.id);
+    else if (st.kind === 'busy' && isAdmin) detailSheet(sel, hr, st.rec, st.id);
+    else if (st.kind === 'closed' && isAdmin) closedSheet(sel, hr, st.id);
+  });
+  function showBanner(t) { var b = $('banner'); b.hidden = false; b.textContent = t; }
+
+  $('overlay').addEventListener('click', async function (ev) {
+    var t = ev.target;
+    if (t.closest('[data-close]')) { closeSheet(); return; }
+    var blk = t.closest('[data-block]');
+    if (blk) {
+      var f = $('bookForm'); var key = f.getAttribute('data-key'), hr = +f.getAttribute('data-h');
+      blk.disabled = true;
+      try { await db.collection('bookings').doc(key + '_' + pad(hr)).set({ date: key, hour: hr, blocked: true, token: 'admin-block', createdAt: Date.now() }); closeSheet(); }
+      catch (e) { blk.disabled = false; showErr('Не получилось закрыть окно. Попробуйте ещё раз.'); }
+      return;
+    }
+    var c = t.closest('[data-cancel]');
+    if (c) {
+      if (c.getAttribute('data-arm') && !c.getAttribute('data-armed')) { c.setAttribute('data-armed', '1'); c.textContent = 'Точно отменить?'; return; }
+      c.disabled = true;
+      var ok = await removeDoc(c.getAttribute('data-cancel'));
+      if (ok) closeSheet(); else { c.disabled = false; c.textContent = 'Не получилось. Повторить'; }
+    }
+  });
+  $('mineList').addEventListener('click', async function (ev) {
+    var c = ev.target.closest('[data-cancel]'); if (!c) return;
+    if (!c.getAttribute('data-armed')) { c.setAttribute('data-armed', '1'); c.textContent = 'Точно отменить?'; return; }
+    c.disabled = true;
+    var ok = await removeDoc(c.getAttribute('data-cancel'));
+    if (!ok) { c.disabled = false; c.textContent = 'Повторить'; }
+  });
+
+  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && !$('overlay').hidden) closeSheet(); });
+
+  $('sheetBody').addEventListener('submit', async function (ev) {
+    ev.preventDefault();
+    var f = ev.target; if (f.id !== 'bookForm') return;
+    var key = f.getAttribute('data-key'), hr = +f.getAttribute('data-h');
+    var name = $('fName').value.trim().replace(/\s+/g, ' ');
+    var phone = fmtPhone($('fPhone').value);
+    if (name.length < 2) { showErr('Введите имя, чтобы мастер знал, как к вам обращаться.'); $('fName').focus(); return; }
+    if (!phone) { showErr('Введите номер телефона полностью, например +7 700 000 00 00.'); $('fPhone').focus(); return; }
+    showErr('');
+    var btn = $('fSubmit'); btn.disabled = true; btn.textContent = 'Записываем…';
+    var err = await book(key, hr, name, phone);
+    if (err) { btn.disabled = false; btn.textContent = 'Записаться'; showErr(err); return; }
+    if (!isAdmin) lsSet('navi-me', { name: name, phone: phone });
+    if (isAdmin) closeSheet(); else doneSheet(key, hr);
+  });
+
+  /* ---------- boot ---------- */
+  buildDays(); render(); renderFooter();
+
+  setInterval(function () {
+    var n = salonNow().key;
+    if (n !== today) { today = n; buildDays(); }
+    render();
+  }, 30000);
+
+  function pickFirstDay() {
+    if (!firstPick) return; firstPick = false;
+    if (freeCount(sel)) return;
+    for (var i = 0; i < days.length; i++) if (freeCount(days[i].key)) { sel = days[i].key; break; }
+    var chip = $('days').querySelector('[data-key="' + sel + '"]');
+    if (chip && chip.scrollIntoView) { try { chip.scrollIntoView({ inline: 'center', block: 'nearest' }); } catch (e) {} }
+  }
+
+  (async function init() {
+    try { user = await claude.use('user'); } catch (e) { user = null; }
+    if (user) {
+      try { isAdmin = !!user.canEdit(); } catch (e) {}
+      try { var w = await user.can('data.write'); if (w === false) canWrite = false; } catch (e) {}
+    }
+    try { db = await claude.use('db'); } catch (e) { db = null; }
+    if (!db) { unavailable = true; render(); return; }
+    db.collection('bookings').where('date', '>=', today).limit(500).onSnapshot(function (snap) {
+      var m = {};
+      snap.docs.forEach(function (d) { var v = d.data(); if (v && (v.token || v.blocked)) m[d.id] = v; });
+      bookings = m; ready = true; failed = false;
+      pickFirstDay(); render();
+    }, function () { failed = true; ready = false; render(); });
+  })();
+})();
+</script>
+
+</body></html>
